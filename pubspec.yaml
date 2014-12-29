@@ -1,0 +1,4 @@
+name: dartprotracker
+description: Play Amiga .mod files.
+dependencies:
+  browser: any

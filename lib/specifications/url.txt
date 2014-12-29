@@ -1,0 +1,62 @@
+           DartProTracker
+WebAudio Amiga Mod file player.
+  
+  
+assumptions :
+
+  a new effect cancels an old effect (just like a new note cancels an old note).  
+ 
+ Question :
+    How to deal with a out-of-bound sound end jump ??
+    
+  Rq : 
+     
+  much nicer code, for parsing : start at the end, then go back
+         
+  Reference specification for this implementation : 
+  http://web.archive.org/web/20120706062044/http://16-bits.org/mod/
+    Those specifications were not respected by every bit to achieve 
+    better quality. ( For instance, frequencies are handled with full
+     precision, not rounded ).
+  
+  Thx at firehawk/tda  (firehawk@haxor.fi) for its spagetthi code (:-))
+      that helped me understand some of the format tricks.
+      His player is showcased here : 
+          http://mod.haxor.fi/
+      The javascript source code is here : 
+          https://github.com/jhalme/webaudio-mod-player
+   
+  /*
+  
+  Notes on the various bits on a single Note.
+  
+  
+  Bits of a note, as it is stored in file : big endian version (this case is not handled) :
+   Byte  1   Byte  2   Byte  3   Byte 4
+  --------- --------- --------- ---------
+  7654-3210 7654-3210 7654-3210 7654-3210
+  wwww XXXX xxxxxxxxx yyyy ZZZZ zzzzzzzzz
+  
+  Bits of a note, little-endian (intel and most devices once data is loaded) : 
+  
+     Byte  4    Byte  3     Byte  2    Byte 1
+    ---------  ---------  ---------   ---------
+    7654-3210   7654-3210  7654-3210  7654-3210
+    zzzzzzzzz   yyyy ZZZZ  xxxxxxxxx  wwww XXXX   
+   0xFF000000 
+  wwww XXXX xxxxxxxxx yyyy ZZZZ zzzzzzzzz
+
+      wwwwyyyy ( 8 bits) : sample_number  =    ( ( n & 0xF0 )   |  ( (n & 0x00F00000) >> 20)  );
+  XXXXxxxxxxxx (12 bits) : sample_period  =    ( ( n & 0x0F ) << 8   |  (n & 0xFF00 >> 8 ) );
+  ZZZZzzzzzzzz (12 bits) : effect and argument
+            effect  (4 bits) ZZZZ     = ( ( n & 0x000F0000 ) >> 20 ) ;   
+            arg_x   (4 bits) zzzz.... = ( ( n & 0xF0000000 ) >> 24 ) ; 
+            arg_y   (4 bits) ....zzzz = ( ( n & 0x0F000000 ) >> 28 ) ;
+            arg_x_y (8 bits) zzzzzzzz = ( ( n & 0xFF000000 ) >> 24 ) ;
+            
+   isNull =  n == 0  ;  ==>> retun / continue
+   else :
+   isArpegio  = (  effect == 0  &&  ( arg_x != 0  || arg_y != 0 ) ) ;   // test for null before
+   pure_effect = ( n & 0x00F0FFFF == 0 ) ; == ( sample_number == 0  && sample_period == 0 )   ;         // and non null
+
+*/
